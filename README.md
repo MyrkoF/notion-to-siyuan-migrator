@@ -1,381 +1,362 @@
-# 🚀 Notion to SiYuan Migrator
+# 🔄 Notion to SiYuan Migrator
 
-> Complete migration toolkit to transfer your entire Notion workspace to SiYuan, preserving properties, tags, and structure.
+**Migration automatisée des databases Notion vers SiYuan avec préservation de la structure et des relations**
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-## 📋 Table of Contents
+---
 
-- [Features](#-features)
-- [Quick Start](#-quick-start)
-- [What Gets Migrated](#-what-gets-migrated)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [Usage](#-usage)
-- [Configuration](#-configuration)
-- [Post-Migration](#-post-migration)
-- [Troubleshooting](#-troubleshooting)
-- [Contributing](#-contributing)
-- [License](#-license)
+## 📋 Vue d'ensemble
 
-## ✨ Features
+Ce projet permet de migrer des databases Notion complexes vers SiYuan en préservant :
+- ✅ Structure des databases → Attribute Views
+- ✅ Types de propriétés (select, date, checkbox, etc.)
+- ✅ Relations entre databases
+- ✅ Contenu des pages
+- ⚠️ Rollups/Formules (recréation manuelle recommandée)
 
-- **🔄 Complete Extraction**: Pulls all pages, properties, and content from Notion
-- **📝 Smart Conversion**: Converts to Markdown with YAML frontmatter for properties
-- **🏗️ Structure Preservation**: Maintains hierarchical organization
-- **🏷️ Properties & Tags**: Preserves metadata in SiYuan-compatible format
-- **📊 Detailed Reports**: ID mapping, error logs, migration statistics
-- **🔒 Safe Migration**: Automatic snapshots before import
-- **🧪 Dry Run Mode**: Test migration without actual import
-- **⚡ Batch Processing**: Handles large workspaces efficiently
+### Approche hybride
 
-## ⚡ Quick Start
+**Phase automatique** : Extraction Notion + Import des données  
+**Phase manuelle** : Création des Attribute Views dans SiYuan (30-60 min)
+
+**Pourquoi ?** Les APIs SiYuan ne permettent pas la création programmatique d'AVs, mais cette approche garantit :
+- Stabilité à long terme (APIs officielles)
+- Zéro maintenance
+- Contrôle total sur la structure
+
+---
+
+## 🚀 Quick Start
+
+### 1. Installation
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/yourusername/notion-to-siyuan-migrator.git
+# Cloner le repo
+git clone https://github.com/MyrkoF/notion-to-siyuan-migrator.git
 cd notion-to-siyuan-migrator
 
-# 2. Run setup
-./setup_migrator.sh
-
-# 3. Test migration (dry run)
-source ~/.notion_siyuan_migrator.env
-export DRY_RUN=true
-python3 notion_to_siyuan_migrator.py
-
-# 4. Run actual migration
-export DRY_RUN=false
-python3 notion_to_siyuan_migrator.py
-```
-
-**See [QUICK_START.md](QUICK_START.md) for detailed walkthrough.**
-
-## ✅ What Gets Migrated
-
-### Automatically Migrated ✅
-
-| Content Type | Status | Notes |
-|--------------|--------|-------|
-| Text content | ✅ Full support | All formatting preserved |
-| Headings (h1-h6) | ✅ Full support | Converted to Markdown |
-| Lists (ordered/unordered) | ✅ Full support | Nested lists supported |
-| Code blocks | ✅ Full support | Syntax highlighting preserved |
-| Tables | ✅ Full support | Markdown tables |
-| Quotes & Callouts | ✅ Full support | Converted to blockquotes |
-| Properties | ✅ Full support | Stored in YAML frontmatter |
-| Tags | ✅ Full support | Preserved as SiYuan tags |
-| Hierarchical structure | ✅ Full support | Document tree maintained |
-
-### Requires Post-Processing ⚠️
-
-| Content Type | Status | Solution |
-|--------------|--------|----------|
-| Notion Databases | ⚠️ Detected | Manual recreation as Attribute Views |
-| Internal links | ⚠️ Mapped | Auto-conversion via post-processor |
-| Relations | ⚠️ Mapped | ID mapping saved for reconnection |
-| Embedded content | ❌ Not supported | Replace with direct links |
-
-## 🔧 Prerequisites
-
-- **Python 3.8+** with `pip`
-- **Notion Integration Token** ([Get one here](https://www.notion.so/my-integrations))
-- **SiYuan** installed and running ([Download](https://github.com/siyuan-note/siyuan))
-- **SiYuan API Token** (Settings → About → API Token)
-
-## 📦 Installation
-
-### Option 1: Automatic Setup (Recommended)
-
-```bash
+# Setup automatique
 chmod +x setup_migrator.sh
 ./setup_migrator.sh
 ```
 
-The setup script will:
-- ✅ Check Python and dependencies
-- ✅ Install required packages (`requests`, `pyyaml`)
-- ✅ Request your API tokens
-- ✅ Test API connections
-- ✅ Save configuration securely
-
-### Option 2: Manual Setup
+### 2. Configuration
 
 ```bash
-# Install dependencies
-pip3 install requests pyyaml
-
-# Copy and configure environment
+# Éditer .env avec tes credentials
 cp .env.example .env
-nano .env  # Edit with your tokens
-
-# Export configuration
-export $(cat .env | xargs)
+nano .env
 ```
 
-## 🚀 Usage
-
-### Basic Migration
-
+**Variables requises** :
 ```bash
-# Load configuration
-source ~/.notion_siyuan_migrator.env
-
-# Run migration
-python3 notion_to_siyuan_migrator.py
+NOTION_TOKEN=secret_xxxxxxxxxxxxx
+SIYUAN_URL=http://192.168.1.11:6806
+SIYUAN_TOKEN=your_siyuan_token
+TARGET_NOTEBOOK_ID=xxx  # À définir plus tard
 ```
 
-### Advanced Options
+### 3. Extraction des databases
 
 ```bash
-# Dry run (no actual import)
+# Activer l'environnement
+source activate_migrator.sh
+
+# Extraire toutes les databases Notion
+python3 extract_by_workspace.py
+```
+
+**Output** :
+- `migration_output/migration_plan.json` - Analyse des 15 databases
+- `migration_output/migration_guide.txt` - Guide de création des AVs
+
+### 4. Créer les Attribute Views dans SiYuan
+
+Utilise `migration_guide.txt` comme checklist pour créer manuellement les AVs dans SiYuan.
+
+**Temps estimé** : 30-60 minutes
+
+### 5. Import des données
+
+```bash
+# Test (recommandé)
 export DRY_RUN=true
-python3 notion_to_siyuan_migrator.py
+export TEST_LIMIT=5
+python3 import_data_to_siyuan.py
 
-# Custom batch size
-export BATCH_SIZE=20
-python3 notion_to_siyuan_migrator.py
-
-# Disable snapshots
-export CREATE_SNAPSHOTS=false
-python3 notion_to_siyuan_migrator.py
+# Import réel
+export DRY_RUN=false
+export TEST_LIMIT=0
+python3 import_data_to_siyuan.py
 ```
-
-### Post-Migration Processing
-
-```bash
-# Convert internal links and analyze databases
-python3 post_migration_processor.py
-```
-
-## ⚙️ Configuration
-
-Edit `.env` or set environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NOTION_TOKEN` | Notion Integration Token | **Required** |
-| `SIYUAN_URL` | SiYuan API endpoint | `http://localhost:6806` |
-| `SIYUAN_TOKEN` | SiYuan API Token | **Required** |
-| `BATCH_SIZE` | Pages per batch | `50` |
-| `DELAY_BETWEEN_CALLS` | API call delay (seconds) | `0.5` |
-| `DRY_RUN` | Test mode without import | `false` |
-| `CREATE_SNAPSHOTS` | Auto-snapshot before import | `true` |
-
-See [`.env.example`](.env.example) for complete configuration template.
-
-## 📊 Output Files
-
-After migration, check `migration_output/`:
-
-```
-migration_output/
-├── migration_report.json         # Complete migration report
-├── id_mapping.json                # Notion ID → SiYuan ID mapping
-├── databases_instructions.md      # How to recreate databases
-└── links_conversion_report.md     # Link conversion report
-```
-
-### Understanding the Report
-
-```json
-{
-  "start_time": "2024-01-15T10:30:00",
-  "end_time": "2024-01-15T10:32:22",
-  "total_pages": 156,
-  "pages_migrated": 156,
-  "databases_found": 5,
-  "errors": [],
-  "warnings": ["Database 'CRM' needs manual recreation"],
-  "mapping": {
-    "notion-page-id": "siyuan-doc-id",
-    ...
-  }
-}
-```
-
-## 🔄 Post-Migration
-
-### 1. Verify Migration
-
-```bash
-# Check document count in SiYuan
-# Settings → About → Statistics
-
-# Test search functionality
-# Search for known keywords
-
-# Inspect frontmatter in documents
-# Properties should be in YAML header
-```
-
-### 2. Recreate Databases
-
-Follow instructions in `migration_output/databases_instructions.md`:
-
-1. Export Notion database as CSV
-2. Create Attribute View in SiYuan
-3. Import data manually or via script
-4. Reconnect relations using `id_mapping.json`
-
-### 3. Convert Internal Links
-
-```bash
-# Run post-processor to convert links
-python3 post_migration_processor.py
-
-# Review conversion report
-cat migration_output/links_conversion_report.md
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-<details>
-<summary><b>Error: "Notion API error 401"</b></summary>
-
-**Cause**: Invalid token or pages not shared with integration.
-
-**Solution**:
-1. Verify token is correct
-2. In Notion, share pages with your integration
-3. Ensure integration has appropriate permissions
-</details>
-
-<details>
-<summary><b>Error: "SiYuan API error 401"</b></summary>
-
-**Cause**: Invalid SiYuan API token.
-
-**Solution**:
-1. Regenerate token in SiYuan (Settings → About)
-2. Update `.env` with new token
-3. Verify SiYuan is running
-</details>
-
-<details>
-<summary><b>Warning: "Database XXX needs manual recreation"</b></summary>
-
-**Cause**: Notion databases cannot be auto-migrated.
-
-**Solution**:
-1. Export database as CSV from Notion
-2. Follow instructions in `databases_instructions.md`
-3. Recreate as Attribute View in SiYuan
-</details>
-
-<details>
-<summary><b>Links not working after migration</b></summary>
-
-**Cause**: Links still use Notion IDs.
-
-**Solution**:
-```bash
-python3 post_migration_processor.py
-```
-This converts links using the ID mapping.
-</details>
-
-See [README_MIGRATION.md](README_MIGRATION.md) for comprehensive troubleshooting.
-
-## 🛡️ Rollback
-
-If migration goes wrong:
-
-### Via SiYuan UI
-```
-Menu → Data History → Snapshots
-→ Select "Before Notion Migration"
-→ Restore
-```
-
-### Via Command Line
-```bash
-# Remove migration folder only
-rm -rf ~/SiYuan/data/*/migration-notion/
-```
-
-## 📚 Documentation
-
-- **[QUICK_START.md](QUICK_START.md)** - Get started in 3 steps
-- **[README_MIGRATION.md](README_MIGRATION.md)** - Complete technical documentation
-- **[API Reference](https://github.com/siyuan-note/siyuan/blob/master/API.md)** - SiYuan API docs
-- **[Notion API](https://developers.notion.com/)** - Notion API documentation
-
-## 🧪 Testing
-
-```bash
-# Run with dry run to test extraction/conversion
-export DRY_RUN=true
-python3 notion_to_siyuan_migrator.py
-
-# Check output in migration_output/
-ls -lh migration_output/
-
-# Verify markdown conversion
-cat migration_output/sample_converted.md
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Setup
-
-```bash
-# Clone your fork
-git clone https://github.com/yourusername/notion-to-siyuan-migrator.git
-
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dev dependencies
-pip install -r requirements-dev.txt
-
-# Run tests
-pytest tests/
-```
-
-## 🗺️ Roadmap
-
-- [ ] Support for Attribute Views via raw SiYuan API
-- [ ] Automatic internal link conversion
-- [ ] Incremental sync (instead of one-shot migration)
-- [ ] GUI interface for easier configuration
-- [ ] Docker container for portable execution
-- [ ] CI/CD integration for automated migrations
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [SiYuan](https://github.com/siyuan-note/siyuan) - Amazing block-based note-taking app
-- [Notion](https://www.notion.so) - Source platform with excellent API
-- Community contributors and testers
-
-## 📧 Contact & Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/notion-to-siyuan-migrator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/notion-to-siyuan-migrator/discussions)
-
-## ⭐ Star History
-
-If this project helped you, please consider giving it a star! ⭐
 
 ---
 
-**Made with ❤️ for the SiYuan community**
+## 📂 Structure du projet
 
-*Migrating knowledge, preserving structure, empowering workflows.*
+```
+notion-to-siyuan-migrator/
+│
+├── 📄 README.md                    # Ce fichier
+├── 📄 PROJECT_PLAN.md              # Checklist détaillée du projet
+├── 📄 TROUBLESHOOTING.md           # Erreurs connues et solutions
+├── 📄 QUICK_START.md               # Guide rapide de démarrage
+│
+├── 🔧 extract_by_workspace.py      # Script d'extraction Notion
+├── 🔧 import_data_to_siyuan.py     # Script d'import SiYuan
+│
+├── 🛠️ setup_migrator.sh             # Setup automatique (venv + deps)
+├── 🛠️ activate_migrator.sh          # Activation environnement
+├── 🛠️ cleanup_repo.sh               # Nettoyage fichiers obsolètes
+│
+├── 📁 migration_output/            # Données générées
+│   ├── migration_plan.json         # Analyse complète des databases
+│   ├── migration_guide.txt         # Guide de création des AVs
+│   └── import_mapping.json         # Mapping Notion ↔ SiYuan (après import)
+│
+├── 📁 old_trash/                   # Fichiers obsolètes archivés
+│
+├── ⚙️ .env                          # Configuration (gitignored)
+├── ⚙️ .env.example                  # Template de configuration
+└── 🐍 venv/                         # Environnement Python virtuel
+```
+
+---
+
+## 🎯 Workflow complet
+
+### Phase 0 : Setup (5 min)
+1. Clone le repo
+2. Lance `./setup_migrator.sh`
+3. Configure `.env`
+
+### Phase 1 : Extraction (5 min)
+1. `python3 extract_by_workspace.py`
+2. Vérifie `migration_plan.json`
+3. Consulte `migration_guide.txt`
+
+### Phase 2 : Création AVs (30-60 min)
+1. Ouvre SiYuan
+2. Crée les Attribute Views manuellement
+3. Utilise le guide comme checklist
+
+**Priorité** : Commence par les 5 databases principales :
+- DB-Projects
+- DB-Tasks
+- DB-Resources
+- DB-Area
+- DB-Objectives
+
+### Phase 3 : Import (1-2h selon volume)
+1. Test : `export DRY_RUN=true && python3 import_data_to_siyuan.py`
+2. Vérifie les résultats
+3. Import réel : `export DRY_RUN=false && python3 import_data_to_siyuan.py`
+
+### Phase 4 : Rollups manuels (15 min)
+Recrée manuellement les rollups dans SiYuan (voir `PROJECT_PLAN.md`)
+
+### Phase 5 : Vérification (15 min)
+- Nombre de documents
+- Propriétés
+- Relations
+- Contenu
+
+---
+
+## 🔧 Scripts détaillés
+
+### extract_by_workspace.py
+
+**Fonction** : Extrait les databases Notion et analyse leur structure
+
+**Features** :
+- Détection automatique des types (Status → select, Files → asset, etc.)
+- Identification des rollups avec leur configuration
+- Mapping des relations entre databases
+- Extraction des options select/multi-select
+- Génération du guide de création
+
+**Usage** :
+```bash
+python3 extract_by_workspace.py
+```
+
+**Output** :
+- `migration_plan.json` - Données structurées pour l'import
+- `migration_guide.txt` - Guide humain-readable
+
+### import_data_to_siyuan.py
+
+**Fonction** : Importe les données Notion dans les Attribute Views SiYuan
+
+**Features** :
+- Import des titres et contenu des pages
+- Conversion des propriétés en attributes SiYuan
+- Sauvegarde des relations (pour reconnexion Phase 4)
+- **Skip automatique des rollups/formules** ✅
+- Mode DRY_RUN pour tests
+- Limitation du nombre d'entrées (TEST_LIMIT)
+
+**Usage** :
+```bash
+# Test
+export DRY_RUN=true
+export TEST_LIMIT=5
+python3 import_data_to_siyuan.py
+
+# Production
+export DRY_RUN=false
+export TEST_LIMIT=0
+python3 import_data_to_siyuan.py
+```
+
+**Variables d'environnement** :
+- `TARGET_NOTEBOOK_ID` - ID du notebook SiYuan cible
+- `DRY_RUN` - `true` = simulation, `false` = import réel
+- `TEST_LIMIT` - Nombre d'entrées max par database (0 = toutes)
+- `DELAY_BETWEEN_CALLS` - Délai entre appels API (défaut: 0.3s)
+
+---
+
+## ⚙️ Configuration
+
+### Obtenir le token Notion
+
+1. Va sur https://www.notion.so/my-integrations
+2. Crée une nouvelle intégration
+3. Copie le "Internal Integration Token"
+4. **Important** : Partage tes databases avec l'intégration
+   - Ouvre chaque database dans Notion
+   - Clic "..." → "Add connections" → Choisis ton intégration
+
+### Obtenir le token SiYuan
+
+1. Ouvre SiYuan
+2. Settings → About → Copy API Token
+3. Note aussi l'URL (ex: `http://192.168.1.11:6806`)
+
+### Identifier le notebook cible
+
+```bash
+# Liste les notebooks
+curl -X POST http://192.168.1.11:6806/api/notebook/lsNotebooks \
+  -H "Authorization: token YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+Copie l'ID du notebook où tu veux importer (ex: `20251218154447-lxfdepg`)
+
+---
+
+## 🎨 Détection des types
+
+Le script détecte automatiquement les bons types :
+
+| Notion Type | SiYuan Type | Notes |
+|------------|-------------|-------|
+| `title` | `text` | Titre de la page |
+| `rich_text` | `text` | Texte enrichi |
+| `number` | `number` | Nombre |
+| `select` | `select` | Options simples |
+| `multi_select` | `multi-select` | Options multiples |
+| `status` | `select` | ⚠️ Status Notion → select |
+| `date` | `date` | Date simple ou plage |
+| `checkbox` | `checkbox` | Booléen |
+| `url` | `url` | Lien |
+| `email` | `email` | Email |
+| `phone_number` | `phone` | Téléphone |
+| `relation` | `relation` | Relation vers autre DB |
+| `files` | `asset` / `text` | Asset si "cover"/"image" |
+| `rollup` | **SKIP** | À recréer manuellement |
+| `formula` | **SKIP** | À recréer manuellement |
+
+---
+
+## ⚠️ Limitations et décisions de design
+
+### Rollups et Formules
+
+**Décision** : Les rollups et formules ne sont **pas importés** automatiquement.
+
+**Raisons** :
+1. Complexité du mapping Notion ↔ SiYuan
+2. Risque d'erreurs et de conflits
+3. Différences de syntaxe entre plateformes
+4. Meilleure qualité en création manuelle
+
+**Solution** : Liste fournie dans `PROJECT_PLAN.md` Phase 5
+
+### Création manuelle des AVs
+
+**Pourquoi pas automatique ?**
+
+L'API SiYuan n'expose pas `/api/av/createAttributeView` de manière stable. Alternatives évaluées :
+- **Option A** : Reverse-engineer les plugins → Risque élevé, maintenance cauchemar
+- **Option B** : Approche hybride → Stable, rapide, maintenable ✅
+
+**ROI** : 3-4h total (setup + création AVs + import) vs 8h+ (dev + risque + maintenance)
+
+### Relations
+
+Les relations sont sauvegardées dans `import_mapping.json` mais **pas encore reconnectées**. Cela nécessite un script supplémentaire (Phase 4 - à venir).
+
+---
+
+## 🐛 Troubleshooting
+
+Voir `TROUBLESHOOTING.md` pour :
+- Erreurs communes et solutions
+- Problèmes d'authentification
+- Erreurs d'API
+- Conflits de types
+
+---
+
+## 📊 Statistiques du projet
+
+**Databases migrées** : 15  
+**Propriétés totales** : ~150  
+**Relations mappées** : 25+  
+**Temps de migration** : 3-4 heures total
+
+**Databases principales** :
+1. DB-Projects (14 propriétés, 5 relations)
+2. DB-Tasks (16 propriétés, 4 relations)
+3. DB-Resources (15 propriétés, 4 relations)
+4. DB-Area (10 propriétés, 2 relations)
+5. DB-Objectives (8 propriétés, 1 relation)
+
+---
+
+## 🤝 Contributing
+
+Voir `CONTRIBUTING.md` pour les guidelines de contribution.
+
+---
+
+## 📄 License
+
+MIT License - Voir `LICENSE` pour détails
+
+---
+
+## 🙏 Remerciements
+
+- [Notion API](https://developers.notion.com/)
+- [SiYuan](https://github.com/siyuan-note/siyuan)
+- Communauté open-source
+
+---
+
+## 📞 Support
+
+- 📄 Consulte `TROUBLESHOOTING.md`
+- 📋 Vérifie `PROJECT_PLAN.md` pour la progression
+- 🐛 Ouvre une issue sur GitHub
+
+---
+
+**✨ Happy migrating! ✨**
