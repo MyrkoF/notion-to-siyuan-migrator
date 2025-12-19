@@ -6,7 +6,7 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
 ---
-
+!!19.12.2025  not fully working, Database API not implemented.
 ## 📋 Vue d'ensemble
 
 Ce projet permet de migrer des databases Notion complexes vers SiYuan en préservant :
